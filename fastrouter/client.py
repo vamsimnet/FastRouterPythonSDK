@@ -4,6 +4,7 @@ import json
 import requests
 from typing import Dict, List, Optional, Any, Union
 from .exceptions import FastRouterError, APIError, AuthenticationError
+from .response_models import HealthResponse
 from .chat import Chat
 
 
@@ -52,8 +53,9 @@ class FastRouter:
         method: str,
         endpoint: str,
         data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        params: Optional[Dict[str, Any]] = None,
+        stream: bool = False
+    ) -> Union[Dict[str, Any], Any]:
         """
         Make HTTP request to FastRouter API
         
@@ -62,9 +64,10 @@ class FastRouter:
             endpoint: API endpoint (without base URL)
             data: Request payload for POST/PUT requests
             params: Query parameters
+            stream: Whether this is a streaming request
             
         Returns:
-            Response JSON data
+            Response JSON data or raw response for streaming
             
         Raises:
             AuthenticationError: For 401 errors
@@ -81,13 +84,15 @@ class FastRouter:
                 headers=headers,
                 json=data if data else None,
                 params=params,
-                timeout=self.timeout
+                timeout=self.timeout,
+                stream=stream  # Enable streaming if requested
             )
             
             # Handle different status codes
             if response.status_code == 401:
                 raise AuthenticationError("Invalid API key or authentication failed")
             elif response.status_code >= 400:
+                # For errors, always try to parse JSON (even for streaming requests)
                 try:
                     error_data = response.json()
                     if isinstance(error_data, dict):
@@ -105,6 +110,10 @@ class FastRouter:
                     # Add debug info to help track down the issue
                     error_message = f"HTTP {response.status_code}: {response.text} (Parse error: {str(e)})"
                 raise APIError(error_message, status_code=response.status_code)
+            
+            # If this is a streaming request, return the raw response
+            if stream:
+                return response
             
             # Try to parse JSON response
             try:
@@ -140,11 +149,12 @@ class FastRouter:
         except requests.exceptions.RequestException as e:
             raise FastRouterError(f"Request failed: {str(e)}")
     
-    def health(self) -> Dict[str, Any]:
+    def health(self) -> HealthResponse:
         """
         Check the health status of the FastRouter API
         
         Returns:
             Health status response
         """
-        return self._make_request("GET", "/health")
+        response_data = self._make_request("GET", "/health")
+        return HealthResponse(response_data)

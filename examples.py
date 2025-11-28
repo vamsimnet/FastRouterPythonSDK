@@ -31,7 +31,13 @@ def basic_completion_example():
             }
         )
         
-        print("Response:", completion)
+        # New OpenAI-compatible attribute access
+        print("Message content:", completion.choices[0].message.content)
+        print("Model used:", completion.model)  
+        print("Usage tokens:", completion.usage.total_tokens if completion.usage else "N/A")
+        
+        # Backward compatibility - dictionary access still works
+        print("Full response type:", type(completion))
         
     except Exception as e:
         print(f"Error: {e}")
@@ -64,7 +70,10 @@ def advanced_completion_example():
             stop=["Note:"]
         )
         
-        print("Response:", completion)
+        # Show both attribute and dictionary access
+        print("Content (attribute):", completion.choices[0].message.content)
+        print("Finish reason:", completion.choices[0].finish_reason)
+        print("Provider used:", completion.usage.provider if completion.usage else "N/A")
         
     except Exception as e:
         print(f"Error: {e}")
@@ -78,7 +87,8 @@ def health_check_example():
     
     try:
         health = client.health()
-        print("Health status:", health)
+        print("Health status:", health.status)
+        print("Health response type:", type(health))
         
     except Exception as e:
         print(f"Error: {e}")
@@ -135,6 +145,39 @@ def provider_selection_example():
         print(f"Error: {e}")
 
 
+def streaming_example():
+    """Demonstrate streaming chat completion"""
+    print("\n=== Streaming Chat Completion ===")
+    
+    client = FastRouter()
+    
+    try:
+        print("Creating streaming completion...")
+        completion = client.chat.completions.create(
+            model="openai/gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": "Tell me a short story about a robot, streaming word by word"}
+            ],
+            max_tokens=100,
+            stream=True,
+            temperature=0.7
+        )
+        
+        print("Streaming response:")
+        full_content = ""
+        
+        for chunk in completion:
+            if chunk.choices and chunk.choices[0].delta.content:
+                content = chunk.choices[0].delta.content
+                full_content += content
+                print(content, end='', flush=True)  # Print without newline
+        
+        print(f"\n\nFull response length: {len(full_content)} characters")
+        
+    except Exception as e:
+        print(f"Error in streaming: {e}")
+
+
 def conversation_example():
     """Demonstrate a multi-turn conversation"""
     print("\n=== Multi-turn Conversation ===")
@@ -162,8 +205,8 @@ def conversation_example():
                 temperature=0.7
             )
             
-            # Extract assistant's response
-            assistant_message = completion['choices'][0]['message']['content']
+            # Extract assistant's response - now using attribute access!
+            assistant_message = completion.choices[0].message.content
             messages.append({"role": "assistant", "content": assistant_message})
             
             print(f"User: {user_input}")
@@ -193,6 +236,7 @@ def main():
     health_check_example()
     error_handling_example()
     provider_selection_example()
+    streaming_example()
     conversation_example()
 
 

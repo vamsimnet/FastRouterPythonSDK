@@ -11,7 +11,7 @@ pip install fastrouter
 Or install from source:
 
 ```bash
-git clone https://github.com/fastrouter/fastrouter-python.git
+git clone https://github.com/vamsimnet/FastRouterPythonSDK.git
 cd fastrouter-python
 pip install -e .
 ```
@@ -58,7 +58,10 @@ completion = client.chat.completions.create(
     }
 )
 
-print(completion)
+# Access response using OpenAI-compatible attributes
+print("Response:", completion.choices[0].message.content)
+print("Model:", completion.model)
+print("Usage:", completion.usage.total_tokens if completion.usage else "N/A")
 ```
 
 ### Health Check
@@ -70,8 +73,58 @@ client = FastRouter()
 
 # Check API health
 health_status = client.health()
-print(health_status)
+print("Status:", health_status.status)
 ```
+
+### Streaming Responses
+
+FastRouter supports streaming responses for real-time chat completion:
+
+```python
+from fastrouter import FastRouter
+
+client = FastRouter()
+
+# Create streaming completion
+completion = client.chat.completions.create(
+    model="openai/gpt-3.5-turbo",
+    messages=[{"role": "user", "content": "Tell me a story"}],
+    max_tokens=200,
+    stream=True  # Enable streaming
+)
+
+# Iterate through streaming chunks
+for chunk in completion:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end='')
+```
+
+### Response Objects
+
+The FastRouter SDK returns OpenAI-compatible response objects with attribute access:
+
+```python
+# OpenAI-style attribute access (recommended)
+completion = client.chat.completions.create(...)
+print(completion.choices[0].message.content)
+print(completion.model)
+print(completion.usage.total_tokens)
+
+# Backward compatibility - dictionary access still works
+response_dict = completion.to_dict()
+print(response_dict['choices'][0]['message']['content'])
+```
+
+#### Response Object Types
+- `ChatCompletion` - Main completion response (non-streaming)
+- `StreamingChatCompletion` - Streaming completion response (iterable)
+- `ChatCompletionChunk` - Individual chunk in streaming response
+- `Choice` - Individual choice with message and finish reason  
+- `ChoiceChunk` - Individual choice in streaming chunk
+- `Message` - Message with role and content
+- `Delta` - Delta object for streaming chunks (partial content)
+- `Usage` - Token usage and cost information
+- `HealthResponse` - Health check status
 
 ## API Reference
 
@@ -166,7 +219,8 @@ response = client.chat.completions.create(
     max_tokens=150
 )
 
-print(response['choices'][0]['message']['content'])
+# OpenAI-compatible attribute access
+print(response.choices[0].message.content)
 ```
 
 ### Using Specific Providers

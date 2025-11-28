@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastrouter"
-version = "0.1.0"
+version = "0.1.2"
 description = "Python client library for the FastRouter API"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/fastrouter/fastrouter-python"
+Homepage = "https://fastrouter.ai/"
 Documentation = "https://docs.fastrouter.ai/"
-Repository = "https://github.com/fastrouter/fastrouter-python"
+Repository = "https://github.com/vamsimnet/FastRouterPythonSDK"
 "Bug Reports" = "https://github.com/fastrouter/fastrouter-python/issues"

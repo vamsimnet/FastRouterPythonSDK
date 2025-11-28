@@ -1,6 +1,7 @@
 """FastRouter chat API implementation"""
 
 from typing import Dict, List, Optional, Any, Union
+from .response_models import ChatCompletion, StreamingChatCompletion
 
 
 class Completions:
@@ -22,7 +23,7 @@ class Completions:
         presence_penalty: Optional[float] = None,
         stop: Optional[Union[str, List[str]]] = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> Union[ChatCompletion, StreamingChatCompletion]:
         """
         Create a chat completion
         
@@ -68,12 +69,30 @@ class Completions:
         # Add any additional kwargs
         payload.update(kwargs)
         
+        # Check if this is a streaming request
+        is_streaming = payload.get('stream', False)
+        
         # Make the API request
-        return self._client._make_request(
-            method="POST",
-            endpoint="/api/v1/chat/completions",
-            data=payload
-        )
+        if is_streaming:
+            # For streaming, get raw response
+            response = self._client._make_request(
+                method="POST",
+                endpoint="/api/v1/chat/completions",
+                data=payload,
+                stream=True
+            )
+            # Return streaming wrapper
+            return StreamingChatCompletion(response, self._client)
+        else:
+            # For non-streaming, get JSON response
+            response_data = self._client._make_request(
+                method="POST",
+                endpoint="/api/v1/chat/completions",
+                data=payload,
+                stream=False
+            )
+            # Return OpenAI-compatible response object
+            return ChatCompletion(response_data)
 
 
 class Chat:
