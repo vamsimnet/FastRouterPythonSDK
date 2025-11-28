@@ -93,13 +93,12 @@ completion = client.chat.completions.create(
     stream=True  # Enable streaming
 )
 
-# Iterate through streaming chunks
+# Iterate through streaming chunks - OpenAI compatible!
 for chunk in completion:
-    # Always check if choices exist first (some chunks may be empty)
-    if chunk.choices and len(chunk.choices) > 0:
-        delta = chunk.choices[0].delta
-        if delta.content:
-            print(delta.content, end='', flush=True)
+    # Works exactly like OpenAI SDK (no IndexError handling needed)
+    delta = chunk.choices[0].delta  
+    if delta.content:
+        print(delta.content, end='', flush=True)
 
 # Alternative: Using convenience properties
 for chunk in completion:

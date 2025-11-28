@@ -108,7 +108,8 @@ class Delta:
     def __init__(self, data: Dict[str, Any]):
         self._data = data
         self.role = data.get('role')
-        self.content = data.get('content', '')
+        # Ensure content is never None for OpenAI compatibility
+        self.content = data.get('content') or ''
     
     def __repr__(self):
         return f"Delta(role={self.role}, content='{self.content[:30]}{'...' if len(self.content) > 30 else ''}')"
@@ -120,7 +121,11 @@ class ChoiceChunk:
     def __init__(self, data: Dict[str, Any]):
         self._data = data
         self.index = data.get('index', 0)
-        self.delta = Delta(data.get('delta', {}))
+        # Ensure delta is always created, even with empty data
+        delta_data = data.get('delta', {})
+        if not isinstance(delta_data, dict):
+            delta_data = {}
+        self.delta = Delta(delta_data)
         self.finish_reason = data.get('finish_reason')
     
     def __repr__(self):
@@ -143,6 +148,17 @@ class ChatCompletionChunk:
         choices_data = data.get('choices', [])
         if not isinstance(choices_data, list):
             choices_data = []
+        
+        # 🔧 OpenAI Compatibility Fix: Ensure there's always at least one choice
+        # This prevents IndexError when users do chunk.choices[0] 
+        if not choices_data:
+            # Create a placeholder choice with empty delta for compatibility
+            choices_data = [{
+                'index': 0,
+                'delta': {},  # Empty delta
+                'finish_reason': None
+            }]
+        
         self.choices = [ChoiceChunk(choice) for choice in choices_data]
         
         # Usage (usually only in final chunk)

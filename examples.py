@@ -167,13 +167,12 @@ def streaming_example():
         full_content = ""
         
         for chunk in completion:
-            # Method 1: Safe manual checking
-            if chunk.choices and len(chunk.choices) > 0:
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    content = delta.content
-                    full_content += content
-                    print(content, end='', flush=True)
+            # Method 1: OpenAI-compatible (works exactly like OpenAI SDK)
+            delta = chunk.choices[0].delta  # No IndexError - SDK handles empty chunks
+            if delta.content:
+                content = delta.content
+                full_content += content
+                print(content, end='', flush=True)
             
             # Method 2: Using convenience properties (alternative approach)
             # if chunk.has_content:
