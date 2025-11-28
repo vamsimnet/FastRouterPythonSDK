@@ -1,0 +1,16 @@
+MANIFEST.in
+README.md
+examples.py
+pyproject.toml
+requirements.txt
+setup.py
+fastrouter/__init__.py
+fastrouter/chat.py
+fastrouter/client.py
+fastrouter/exceptions.py
+fastrouter/response_models.py
+fastrouter.egg-info/PKG-INFO
+fastrouter.egg-info/SOURCES.txt
+fastrouter.egg-info/dependency_links.txt
+fastrouter.egg-info/requires.txt
+fastrouter.egg-info/top_level.txt
