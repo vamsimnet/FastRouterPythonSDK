@@ -139,8 +139,10 @@ class ChatCompletionChunk:
         self.created = data.get('created')
         self.model = data.get('model', '')
         
-        # Choices - convert to ChoiceChunk objects
+        # Choices - convert to ChoiceChunk objects, ensure it's always a list
         choices_data = data.get('choices', [])
+        if not isinstance(choices_data, list):
+            choices_data = []
         self.choices = [ChoiceChunk(choice) for choice in choices_data]
         
         # Usage (usually only in final chunk)
@@ -149,6 +151,22 @@ class ChatCompletionChunk:
     
     def __repr__(self):
         return f"ChatCompletionChunk(id='{self.id}', model='{self.model}', choices={len(self.choices)})"
+    
+    @property
+    def has_content(self) -> bool:
+        """Check if this chunk has actual content"""
+        if not self.choices or len(self.choices) == 0:
+            return False
+        
+        content = self.choices[0].delta.content
+        return content is not None and content.strip() != ''
+    
+    @property
+    def content(self) -> str:
+        """Safely get content from first choice, or empty string"""
+        if self.has_content:
+            return self.choices[0].delta.content
+        return ""
     
     def to_dict(self) -> Dict[str, Any]:
         """Return the original dictionary representation"""

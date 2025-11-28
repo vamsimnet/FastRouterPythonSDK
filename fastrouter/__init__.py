@@ -14,7 +14,7 @@ from .response_models import (
     StreamingChatCompletion
 )
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __all__ = [
     "FastRouter", 
     "FastRouterError", 

@@ -95,8 +95,16 @@ completion = client.chat.completions.create(
 
 # Iterate through streaming chunks
 for chunk in completion:
-    if chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end='')
+    # Always check if choices exist first (some chunks may be empty)
+    if chunk.choices and len(chunk.choices) > 0:
+        delta = chunk.choices[0].delta
+        if delta.content:
+            print(delta.content, end='', flush=True)
+
+# Alternative: Using convenience properties
+for chunk in completion:
+    if chunk.has_content:  # Built-in safety check
+        print(chunk.content, end='', flush=True)  # Safe content getter
 ```
 
 ### Response Objects

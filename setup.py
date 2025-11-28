@@ -18,7 +18,7 @@ except FileNotFoundError:
 
 setup(
     name="fastrouter",
-    version="0.1.2",
+    version="0.1.3",
     author="FastRouter Team",
     author_email="support@fastrouter.ai",
     description="Python client library for the FastRouter API",
