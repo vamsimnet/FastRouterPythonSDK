@@ -91,24 +91,47 @@ class FastRouter:
                 try:
                     error_data = response.json()
                     if isinstance(error_data, dict):
-                        error_message = error_data.get('error', {}).get('message', 'Unknown API error')
+                        # Get error object, ensure it's a dict before calling .get() again
+                        error_obj = error_data.get('error', {})
+                        if isinstance(error_obj, dict):
+                            error_message = error_obj.get('message', 'Unknown API error')
+                        elif isinstance(error_obj, str):
+                            error_message = error_obj
+                        else:
+                            error_message = str(error_obj) if error_obj else 'Unknown API error'
                     else:
                         error_message = str(error_data)
-                except (ValueError, KeyError):
-                    error_message = f"HTTP {response.status_code}: {response.text}"
+                except (ValueError, KeyError, AttributeError) as e:
+                    # Add debug info to help track down the issue
+                    error_message = f"HTTP {response.status_code}: {response.text} (Parse error: {str(e)})"
                 raise APIError(error_message, status_code=response.status_code)
             
             # Try to parse JSON response
             try:
                 json_response = response.json()
+                # Debug: print response type and content for troubleshooting (disabled)
+                # print(f"DEBUG: Response type: {type(json_response)}, Content: {json_response}")
+                
                 # Ensure we always return a dictionary
                 if isinstance(json_response, dict):
+                    # Check if this is actually an error response disguised as success
+                    if 'error' in json_response:
+                        # This might be an error response with 200 status - handle it properly
+                        error_obj = json_response.get('error', {})
+                        if isinstance(error_obj, dict):
+                            error_message = error_obj.get('message', 'Unknown API error')
+                        elif isinstance(error_obj, str):
+                            error_message = error_obj
+                        else:
+                            error_message = str(error_obj) if error_obj else 'Unknown API error'
+                        raise APIError(error_message, status_code=200)
+                    
                     return json_response
                 else:
                     return {"data": json_response}
-            except ValueError:
+            except ValueError as e:
                 # If response is not JSON, return the text content wrapped in a dict
-                return {"content": response.text}
+                return {"content": response.text, "parse_error": str(e)}
                 
         except requests.exceptions.Timeout:
             raise FastRouterError("Request timed out")
