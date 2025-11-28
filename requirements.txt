@@ -1,0 +1,2 @@
+# FastRouter Python SDK dependencies
+requests>=2.25.0
